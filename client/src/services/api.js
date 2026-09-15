@@ -4,7 +4,8 @@
  * to Authorization headers for authenticated requests.
  */
 
-const BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
 
 /**
  * Get the stored JWT token from localStorage
