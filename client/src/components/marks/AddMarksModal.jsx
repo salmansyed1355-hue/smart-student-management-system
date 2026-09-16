@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Award, AlertCircle, Loader2, Plus } from 'lucide-react';
+import { BASE_URL } from '../../services/api';
 
 export default function AddMarksModal({ isOpen, onClose, students, onMarksAdded }) {
   const [studentId, setStudentId] = useState('');
@@ -63,7 +64,7 @@ export default function AddMarksModal({ isOpen, onClose, students, onMarksAdded 
         obtainedMarks: numObtained
       };
 
-      const response = await fetch('http://localhost:5000/api/marks', {
+      const response = await fetch(`${BASE_URL}/marks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -15,6 +15,7 @@ import {
   X 
 } from 'lucide-react';
 import AttendanceHistoryModal from './AttendanceHistoryModal';
+import { BASE_URL } from '../../services/api';
 
 export default function AttendanceManagement({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
@@ -50,7 +51,7 @@ export default function AttendanceManagement({ onServerStatusChange }) {
     setLoadingStudents(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/students');
+      const response = await fetch(`${BASE_URL}/students`);
       if (!response.ok) {
         throw new Error(`Failed to load students (HTTP ${response.status})`);
       }
@@ -153,7 +154,7 @@ export default function AttendanceManagement({ onServerStatusChange }) {
         records
       };
 
-      const response = await fetch('http://localhost:5000/api/attendance', {
+      const response = await fetch(`${BASE_URL}/attendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

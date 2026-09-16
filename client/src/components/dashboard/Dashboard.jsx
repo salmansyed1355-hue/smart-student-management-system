@@ -28,6 +28,7 @@ import {
   PieChart, 
   Pie 
 } from 'recharts';
+import { BASE_URL } from '../../services/api';
 
 export default function Dashboard({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
@@ -42,9 +43,9 @@ export default function Dashboard({ onServerStatusChange }) {
     setError(null);
     try {
       const [studentsRes, attendanceRes, marksRes] = await Promise.all([
-        fetch('http://localhost:5000/api/students'),
-        fetch('http://localhost:5000/api/attendance'),
-        fetch('http://localhost:5000/api/marks')
+        fetch(`${BASE_URL}/students`),
+        fetch(`${BASE_URL}/attendance`),
+        fetch(`${BASE_URL}/marks`)
       ]);
 
       if (!studentsRes.ok || !attendanceRes.ok || !marksRes.ok) {

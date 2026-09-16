@@ -6,6 +6,7 @@ import {
   Loader2, 
   AlertCircle
 } from 'lucide-react';
+import { BASE_URL } from '../../services/api';
 
 export default function StudentMarksHistoryModal({ isOpen, onClose, studentId }) {
   const [data, setData] = useState(null);
@@ -16,7 +17,7 @@ export default function StudentMarksHistoryModal({ isOpen, onClose, studentId })
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://localhost:5000/api/marks/student/${id}`);
+      const response = await fetch(`${BASE_URL}/marks/student/${id}`);
       if (!response.ok) {
         throw new Error(`Failed to load marks history (HTTP ${response.status})`);
       }

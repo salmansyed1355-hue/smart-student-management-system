@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { BASE_URL } from '../../services/api';
 
 export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
   const initialFormState = {
@@ -63,7 +64,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
         batchYear: Number(formData.batchYear)
       };
 
-      const response = await fetch('http://localhost:5000/api/students', {
+      const response = await fetch(`${BASE_URL}/students`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

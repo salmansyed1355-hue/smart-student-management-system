@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import AddMarksModal from './AddMarksModal';
 import StudentMarksHistoryModal from './StudentMarksHistoryModal';
+import { BASE_URL } from '../../services/api';
 
 export default function MarksManagement({ onServerStatusChange }) {
   const [marks, setMarks] = useState([]);
@@ -50,7 +51,7 @@ export default function MarksManagement({ onServerStatusChange }) {
   // 1. Fetch Students
   const fetchStudents = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/students');
+      const res = await fetch(`${BASE_URL}/students`);
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -67,7 +68,7 @@ export default function MarksManagement({ onServerStatusChange }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/marks');
+      const res = await fetch(`${BASE_URL}/marks`);
       if (!res.ok) {
         throw new Error(`Failed to load marks records (HTTP ${res.status})`);
       }

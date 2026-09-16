@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Edit2, AlertCircle, Loader2, Save } from 'lucide-react';
+import { BASE_URL } from '../../services/api';
 
 export default function EditStudentModal({ isOpen, onClose, student, onStudentUpdated }) {
   const [formData, setFormData] = useState({
@@ -80,7 +81,7 @@ export default function EditStudentModal({ isOpen, onClose, student, onStudentUp
         status: formData.status
       };
 
-      const response = await fetch(`http://localhost:5000/api/students/${student._id}`, {
+      const response = await fetch(`${BASE_URL}/students/${student._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

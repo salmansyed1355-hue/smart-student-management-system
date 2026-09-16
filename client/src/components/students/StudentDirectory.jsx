@@ -14,6 +14,7 @@ import AddStudentModal from './AddStudentModal';
 import ViewStudentModal from './ViewStudentModal';
 import EditStudentModal from './EditStudentModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import { BASE_URL } from '../../services/api';
 
 export default function StudentDirectory({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
@@ -43,7 +44,7 @@ export default function StudentDirectory({ onServerStatusChange }) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/students');
+      const response = await fetch(`${BASE_URL}/students`);
       if (!response.ok) {
         throw new Error(`Server responded with HTTP ${response.status}`);
       }
