@@ -10,7 +10,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function AttendanceHistoryModal({ isOpen, onClose, studentId }) {
   const [data, setData] = useState(null);
@@ -30,11 +30,7 @@ export default function AttendanceHistoryModal({ isOpen, onClose, studentId }) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${BASE_URL}/attendance/student/${id}`);
-      if (!response.ok) {
-        throw new Error(`Failed to load attendance history (HTTP ${response.status})`);
-      }
-      const json = await response.json();
+      const json = await apiRequest(`/attendance/student/${id}`);
       if (json.success) {
         setData(json);
       } else {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Edit2, AlertCircle, Loader2, Save } from 'lucide-react';
-import { BASE_URL } from '../../services/api';
+import { X, UserCheck, AlertCircle, Loader2, Edit2, Save } from 'lucide-react';
+import { apiRequest } from '../../services/api';
 
 export default function EditStudentModal({ isOpen, onClose, student, onStudentUpdated }) {
   const [formData, setFormData] = useState({
@@ -81,19 +81,10 @@ export default function EditStudentModal({ isOpen, onClose, student, onStudentUp
         status: formData.status
       };
 
-      const response = await fetch(`${BASE_URL}/students/${student._id}`, {
+      const result = await apiRequest(`/students/${student._id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to update student.');
-      }
 
       onStudentUpdated(result.data);
       onClose();

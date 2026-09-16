@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2, Loader2, X } from 'lucide-react';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function DeleteConfirmModal({ isOpen, onClose, student, onStudentDeleted }) {
   const [deleting, setDeleting] = useState(false);
@@ -13,15 +13,9 @@ export default function DeleteConfirmModal({ isOpen, onClose, student, onStudent
     setErrorMessage('');
 
     try {
-      const response = await fetch(`${BASE_URL}/students/${student._id}`, {
+      await apiRequest(`/students/${student._id}`, {
         method: 'DELETE'
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to delete student.');
-      }
 
       onStudentDeleted(student);
       onClose();

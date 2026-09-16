@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import AddMarksModal from './AddMarksModal';
 import StudentMarksHistoryModal from './StudentMarksHistoryModal';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function MarksManagement({ onServerStatusChange }) {
   const [marks, setMarks] = useState([]);
@@ -48,31 +48,24 @@ export default function MarksManagement({ onServerStatusChange }) {
 
   const examTypes = ['Internal', 'Midterm', 'Assignment', 'Final'];
 
-  // 1. Fetch Students
+  // 1. Fetch Students using authenticated apiRequest
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/students`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          setStudents(json.data);
-        }
+      const json = await apiRequest('/students');
+      if (json.success && Array.isArray(json.data)) {
+        setStudents(json.data);
       }
     } catch (err) {
       console.error('Failed to load students:', err);
     }
   };
 
-  // 2. Fetch Marks
+  // 2. Fetch Marks using authenticated apiRequest
   const fetchMarks = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE_URL}/marks`);
-      if (!res.ok) {
-        throw new Error(`Failed to load marks records (HTTP ${res.status})`);
-      }
-      const json = await res.json();
+      const json = await apiRequest('/marks');
       if (json.success && Array.isArray(json.data)) {
         setMarks(json.data);
         if (onServerStatusChange) onServerStatusChange(true);

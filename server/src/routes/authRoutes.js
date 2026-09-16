@@ -4,11 +4,22 @@ const router = express.Router();
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 
-// Helper to generate signed JWT token
-const generateToken = (id, email) => {
-  return jwt.sign({ id, email }, process.env.JWT_SECRET, {
-    expiresIn: '7d'
-  });
+const Student = require('../models/Student');
+
+// Helper to generate signed JWT token with role and studentId
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      role: (user.role || 'faculty').toLowerCase(),
+      studentId: user.studentId || null
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '7d'
+    }
+  );
 };
 
 /**
@@ -18,7 +29,7 @@ const generateToken = (id, email) => {
  */
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role = 'faculty', rollNumber, studentId } = req.body;
 
     // 1. Validate required fields
     if (!name || !email || !password) {
@@ -45,19 +56,72 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // 4. Create new user document (pre-save hook hashes password with bcrypt)
+    // 4. Validate role
+    const normalizedRole = role.toLowerCase().trim();
+    if (!['faculty', 'student'].includes(normalizedRole)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role must be either faculty or student.'
+      });
+    }
+
+    // 5. If registering as a student, resolve and verify student record
+    let linkedStudentId = null;
+    if (normalizedRole === 'student') {
+      let studentDoc = null;
+      if (rollNumber) {
+        studentDoc = await Student.findOne({ rollNumber: rollNumber.trim().toUpperCase() });
+      } else if (studentId) {
+        studentDoc = await Student.findById(studentId);
+      } else {
+        studentDoc = await Student.findOne({ email: email.toLowerCase().trim() });
+      }
+
+      // If no student record exists with given identifiers
+      if (!studentDoc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Student record not found. Please verify your roll number or contact college administration.'
+        });
+      }
+
+      // FIX 1: Verify signup email matches official student record email exactly
+      const normalizedSignupEmail = email.toLowerCase().trim();
+      const officialEmail = (studentDoc.email || '').toLowerCase().trim();
+      if (normalizedSignupEmail !== officialEmail) {
+        return res.status(403).json({
+          success: false,
+          message: 'Student email does not match the official email registered for this roll number.'
+        });
+      }
+
+      // FIX 2: Enforce strictly ONE User account per Student record
+      const existingStudentAccount = await User.findOne({ studentId: studentDoc._id });
+      if (existingStudentAccount) {
+        return res.status(409).json({
+          success: false,
+          message: 'A student portal account has already been registered for this student record. Please sign in instead.'
+        });
+      }
+
+      linkedStudentId = studentDoc._id;
+    }
+
+    // 6. Create new user document (pre-save hook hashes password with bcrypt)
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password
+      password,
+      role: normalizedRole,
+      studentId: linkedStudentId
     });
 
     await user.save();
 
-    // 5. Generate JWT token
-    const token = generateToken(user._id, user.email);
+    // 7. Generate JWT token
+    const token = generateToken(user);
 
-    // 6. Return response (excluding password)
+    // 8. Return response (excluding password)
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
@@ -65,10 +129,25 @@ router.post('/signup', async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role,
+        studentId: user.studentId
       }
     });
   } catch (error) {
+    if (error.code === 11000) {
+      if (error.keyPattern?.studentId || error.keyValue?.studentId) {
+        return res.status(409).json({
+          success: false,
+          message: 'A student portal account has already been registered for this student record.'
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists.'
+      });
+    }
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
@@ -87,12 +166,12 @@ router.post('/signup', async (req, res) => {
 
 /**
  * @route   POST /api/auth/login
- * @desc    Authenticate user, compare bcrypt password, and return JWT
+ * @desc    Authenticate user, compare bcrypt password, validate selected role, and return JWT
  * @access  Public
  */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     // 1. Validate inputs
     if (!email || !password) {
@@ -120,8 +199,27 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 4. Generate JWT token
-    const token = generateToken(user._id, user.email);
+    const userRole = (user.role || 'faculty').toLowerCase();
+
+    // 4. Role validation if role is specified in request
+    if (role && role.toLowerCase().trim() !== userRole) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Your account is registered as "${userRole.toUpperCase()}", not "${role.toUpperCase()}".`
+      });
+    }
+
+    // If user is a student but has no studentId yet, try to auto-link via matching email
+    if (userRole === 'student' && !user.studentId) {
+      const studentMatch = await Student.findOne({ email: user.email });
+      if (studentMatch) {
+        user.studentId = studentMatch._id;
+        await user.save();
+      }
+    }
+
+    // 5. Generate JWT token
+    const token = generateToken(user);
 
     res.status(200).json({
       success: true,
@@ -130,7 +228,9 @@ router.post('/login', async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: userRole,
+        studentId: user.studentId || null
       }
     });
   } catch (error) {
@@ -162,7 +262,9 @@ router.get('/me', protect, async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role || 'faculty',
+        studentId: user.studentId || null
       }
     });
   } catch (error) {

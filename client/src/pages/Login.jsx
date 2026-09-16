@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { GraduationCap, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
+import { GraduationCap, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle, Shield, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login({ onSwitchToSignup }) {
   const { login } = useAuth();
 
+  const [selectedRole, setSelectedRole] = useState('faculty'); // 'faculty' or 'student'
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,6 +23,11 @@ export default function Login({ onSwitchToSignup }) {
     if (errorMessage) setErrorMessage('');
   };
 
+  const handleRoleChange = (role) => {
+    setSelectedRole(role);
+    setErrorMessage('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -33,7 +39,7 @@ export default function Login({ onSwitchToSignup }) {
 
     try {
       setIsLoading(true);
-      await login(formData.email.trim(), formData.password);
+      await login(formData.email.trim(), formData.password, selectedRole);
       // On success, AuthContext updates user/token and App switches to dashboard automatically
     } catch (err) {
       setErrorMessage(err.message || 'Invalid email or password. Please try again.');
@@ -48,7 +54,7 @@ export default function Login({ onSwitchToSignup }) {
       <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all">
         
         {/* Brand Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/40 mb-4 transform hover:scale-105 transition-transform">
             <GraduationCap className="w-8 h-8" />
           </div>
@@ -59,8 +65,46 @@ export default function Login({ onSwitchToSignup }) {
             Welcome Back
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Enter your credentials to access the academic portal
+            Select your portal role and enter your credentials
           </p>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div className="mb-6 p-1 bg-slate-100/90 rounded-xl flex items-center gap-1 border border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => handleRoleChange('faculty')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              selectedRole === 'faculty'
+                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Faculty Login</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRoleChange('student')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              selectedRole === 'student'
+                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Student Login</span>
+          </button>
+        </div>
+
+        {/* Role Helper Banner */}
+        <div className="mb-5 px-3 py-2 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs text-indigo-700">
+          <span className="font-medium">
+            Logging in as: <strong className="uppercase">{selectedRole}</strong>
+          </span>
+          <span className="text-[11px] text-indigo-500">
+            {selectedRole === 'faculty' ? 'Admin / Management' : 'Academic Portal'}
+          </span>
         </div>
 
         {/* Error Alert Box */}
@@ -72,11 +116,11 @@ export default function Login({ onSwitchToSignup }) {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-              Email Address
+              {selectedRole === 'faculty' ? 'Faculty Email Address' : 'Student Email Address'}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -87,7 +131,7 @@ export default function Login({ onSwitchToSignup }) {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="admin@example.com"
+                placeholder={selectedRole === 'faculty' ? 'admin@example.com' : 'aarav.sharma5@example.com'}
                 required
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
@@ -132,22 +176,16 @@ export default function Login({ onSwitchToSignup }) {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Signing In...</span>
+                <span>Signing In as {selectedRole === 'faculty' ? 'Faculty' : 'Student'}...</span>
               </>
             ) : (
               <>
-                <span>Sign In</span>
+                <span>Sign In as {selectedRole === 'faculty' ? 'Faculty' : 'Student'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
-
-        {/* Demo Credentials Tip for easy testing */}
-        <div className="mt-6 p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-          <span className="text-xs text-slate-500 block">Default Test Credentials:</span>
-          <span className="text-xs font-mono text-slate-700">admin@example.com / password123</span>
-        </div>
 
         {/* Footer / Switch to Signup */}
         <div className="mt-6 text-center text-sm text-slate-500">
@@ -164,3 +202,4 @@ export default function Login({ onSwitchToSignup }) {
     </div>
   );
 }
+

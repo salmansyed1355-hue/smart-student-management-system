@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Award, AlertCircle, Loader2, Plus } from 'lucide-react';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function AddMarksModal({ isOpen, onClose, students, onMarksAdded }) {
   const [studentId, setStudentId] = useState('');
@@ -64,19 +64,10 @@ export default function AddMarksModal({ isOpen, onClose, students, onMarksAdded 
         obtainedMarks: numObtained
       };
 
-      const response = await fetch(`${BASE_URL}/marks`, {
+      const result = await apiRequest('/marks', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to record marks.');
-      }
 
       // Reset form
       setObtainedMarks('');

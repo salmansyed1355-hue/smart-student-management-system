@@ -14,21 +14,24 @@ import {
   AlertCircle, 
   X 
 } from 'lucide-react';
+import { apiRequest } from '../../services/api';
 import AttendanceHistoryModal from './AttendanceHistoryModal';
-import { BASE_URL } from '../../services/api';
 
 export default function AttendanceManagement({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [error, setError] = useState(null);
 
-  // Class Sheet state
+  // Form input state
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [subject, setSubject] = useState('Data Structures');
-  // Map of studentId -> 'Present' | 'Absent' | 'Late'
+  const [selectedDept, setSelectedDept] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Attendance status mapping: { studentId: 'Present' | 'Absent' | 'Late' }
   const [attendanceMap, setAttendanceMap] = useState({});
 
-  // Submission & Notification state
+  // Submission state
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [formError, setFormError] = useState(null);
@@ -39,23 +42,19 @@ export default function AttendanceManagement({ onServerStatusChange }) {
 
   const subjectsList = [
     'Data Structures',
-    'Database Management Systems',
     'Computer Networks',
     'Operating Systems',
+    'Database Management',
     'Software Engineering',
     'Web Technologies'
   ];
 
-  // Fetch all students from Express API
+  // Fetch all students from Express API using authenticated apiRequest
   const fetchStudents = async () => {
     setLoadingStudents(true);
     setError(null);
     try {
-      const response = await fetch(`${BASE_URL}/students`);
-      if (!response.ok) {
-        throw new Error(`Failed to load students (HTTP ${response.status})`);
-      }
-      const json = await response.json();
+      const json = await apiRequest('/students');
       if (json.success && Array.isArray(json.data)) {
         setStudents(json.data);
         // Default everyone to 'Present' initially for teacher convenience
@@ -154,19 +153,10 @@ export default function AttendanceManagement({ onServerStatusChange }) {
         records
       };
 
-      const response = await fetch(`${BASE_URL}/attendance`, {
+      const result = await apiRequest('/attendance', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to record attendance.');
-      }
 
       setSuccessMessage(`Attendance successfully recorded for ${result.count} students in ${subject}!`);
       setTimeout(() => {

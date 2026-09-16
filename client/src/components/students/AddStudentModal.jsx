@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
   const initialFormState = {
@@ -64,19 +64,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
         batchYear: Number(formData.batchYear)
       };
 
-      const response = await fetch(`${BASE_URL}/students`, {
+      const result = await apiRequest('/students', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to create student.');
-      }
 
       // Reset form and notify parent
       setFormData(initialFormState);

@@ -28,7 +28,7 @@ import {
   PieChart, 
   Pie 
 } from 'recharts';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function Dashboard({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
@@ -37,25 +37,15 @@ export default function Dashboard({ onServerStatusChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch all data sources from Express APIs concurrently
+  // Fetch all data sources from Express APIs concurrently using authenticated apiRequest
   const fetchDashboardData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [studentsRes, attendanceRes, marksRes] = await Promise.all([
-        fetch(`${BASE_URL}/students`),
-        fetch(`${BASE_URL}/attendance`),
-        fetch(`${BASE_URL}/marks`)
-      ]);
-
-      if (!studentsRes.ok || !attendanceRes.ok || !marksRes.ok) {
-        throw new Error('One or more dashboard API endpoints failed to respond.');
-      }
-
       const [studentsData, attendanceData, marksData] = await Promise.all([
-        studentsRes.json(),
-        attendanceRes.json(),
-        marksRes.json()
+        apiRequest('/students'),
+        apiRequest('/attendance'),
+        apiRequest('/marks')
       ]);
 
       if (studentsData.success && attendanceData.success && marksData.success) {

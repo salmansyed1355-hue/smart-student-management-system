@@ -3,13 +3,69 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const Mark = require('../models/Mark');
 const Student = require('../models/Student');
+const { protect, requireFaculty, requireStudent } = require('../middleware/authMiddleware');
+
+/**
+ * @route   GET /api/marks/me
+ * @desc    Fetch own marks records and calculated percentage summary for authenticated student
+ * @access  Private (Student only)
+ */
+router.get('/me', protect, requireStudent, async (req, res) => {
+  try {
+    if (!req.user.studentId) {
+      return res.status(404).json({
+        success: false,
+        message: 'No student record linked to this user account.'
+      });
+    }
+
+    const student = await Student.findById(req.user.studentId).select('rollNumber fullName department semester');
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student record not found.'
+      });
+    }
+
+    const records = await Mark.find({ studentId: req.user.studentId }).sort({ createdAt: -1 });
+
+    const totalExams = records.length;
+    let totalObtained = 0;
+    let totalMax = 0;
+
+    records.forEach((r) => {
+      totalObtained += r.obtainedMarks;
+      totalMax += r.maxMarks;
+    });
+
+    const overallPercentage = totalMax > 0 ? Math.round((totalObtained / totalMax) * 100 * 10) / 10 : 0;
+
+    res.status(200).json({
+      success: true,
+      student,
+      summary: {
+        totalExams,
+        totalObtained,
+        totalMax,
+        overallPercentage
+      },
+      data: records
+    });
+  } catch (error) {
+    console.error(`[Error] Failed to fetch student marks history: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching student marks.'
+    });
+  }
+});
 
 /**
  * @route   GET /api/marks
  * @desc    Fetch marks records with populated student details and optional filters
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.get('/', async (req, res) => {
+router.get('/', protect, requireFaculty, async (req, res) => {
   try {
     const { studentId, subject, examType } = req.query;
     const filter = {};
@@ -53,9 +109,9 @@ router.get('/', async (req, res) => {
 /**
  * @route   POST /api/marks
  * @desc    Record marks for a student in a subject and exam type
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, requireFaculty, async (req, res) => {
   try {
     const { studentId, subject, examType, maxMarks, obtainedMarks } = req.body;
 
@@ -157,9 +213,9 @@ router.post('/', async (req, res) => {
 /**
  * @route   GET /api/marks/student/:studentId
  * @desc    Fetch all marks and calculated percentage summary for a specific student
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.get('/student/:studentId', async (req, res) => {
+router.get('/student/:studentId', protect, requireFaculty, async (req, res) => {
   try {
     const { studentId } = req.params;
 

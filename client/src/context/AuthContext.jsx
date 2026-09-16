@@ -15,6 +15,16 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('sms_token') || null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * User Logout
+   */
+  const logout = () => {
+    localStorage.removeItem('sms_token');
+    localStorage.removeItem('sms_user');
+    setToken(null);
+    setUser(null);
+  };
+
   // Verify token on mount to ensure session validity
   useEffect(() => {
     const verifySession = async () => {
@@ -27,8 +37,15 @@ export const AuthProvider = ({ children }) => {
       try {
         const data = await apiRequest('/auth/me');
         if (data.success && data.user) {
-          setUser(data.user);
-          localStorage.setItem('sms_user', JSON.stringify(data.user));
+          const formattedUser = {
+            id: data.user._id || data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: (data.user.role || 'faculty').toLowerCase(),
+            studentId: data.user.studentId || null,
+          };
+          setUser(formattedUser);
+          localStorage.setItem('sms_user', JSON.stringify(formattedUser));
         } else {
           logout();
         }
@@ -48,18 +65,33 @@ export const AuthProvider = ({ children }) => {
    * @param {string} name 
    * @param {string} email 
    * @param {string} password 
+   * @param {string} role ('faculty' | 'student')
+   * @param {string} rollNumber (optional for student)
    */
-  const signup = async (name, email, password) => {
+  const signup = async (name, email, password, role = 'faculty', rollNumber = '') => {
     const data = await apiRequest('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role,
+        ...(rollNumber ? { rollNumber } : {})
+      }),
     });
 
     if (data.success && data.token && data.user) {
+      const formattedUser = {
+        id: data.user._id || data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: (data.user.role || role).toLowerCase(),
+        studentId: data.user.studentId || null,
+      };
       setToken(data.token);
-      setUser(data.user);
+      setUser(formattedUser);
       localStorage.setItem('sms_token', data.token);
-      localStorage.setItem('sms_user', JSON.stringify(data.user));
+      localStorage.setItem('sms_user', JSON.stringify(formattedUser));
     }
     return data;
   };
@@ -68,30 +100,28 @@ export const AuthProvider = ({ children }) => {
    * User Login
    * @param {string} email 
    * @param {string} password 
+   * @param {string} role ('faculty' | 'student')
    */
-  const login = async (email, password) => {
+  const login = async (email, password, role = 'faculty') => {
     const data = await apiRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
 
     if (data.success && data.token && data.user) {
+      const formattedUser = {
+        id: data.user._id || data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: (data.user.role || role).toLowerCase(),
+        studentId: data.user.studentId || null,
+      };
       setToken(data.token);
-      setUser(data.user);
+      setUser(formattedUser);
       localStorage.setItem('sms_token', data.token);
-      localStorage.setItem('sms_user', JSON.stringify(data.user));
+      localStorage.setItem('sms_user', JSON.stringify(formattedUser));
     }
     return data;
-  };
-
-  /**
-   * User Logout
-   */
-  const logout = () => {
-    localStorage.removeItem('sms_token');
-    localStorage.removeItem('sms_user');
-    setToken(null);
-    setUser(null);
   };
 
   const value = {

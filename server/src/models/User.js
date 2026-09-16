@@ -23,11 +23,35 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long']
   },
+  role: {
+    type: String,
+    enum: {
+      values: ['faculty', 'student'],
+      message: 'Role must be either faculty or student'
+    },
+    default: 'faculty',
+    lowercase: true,
+    trim: true
+  },
+  studentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Student',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Enforce one user account per student while allowing multiple faculty users with null studentId
+userSchema.index(
+  { studentId: 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { studentId: { $type: 'objectId' } } 
+  }
+);
 
 // Pre-save hook: automatically hash password with bcryptjs before saving
 userSchema.pre('save', async function () {

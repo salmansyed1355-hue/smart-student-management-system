@@ -3,13 +3,65 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
+const { protect, requireFaculty, requireStudent } = require('../middleware/authMiddleware');
+
+/**
+ * @route   GET /api/attendance/me
+ * @desc    Fetch own attendance history and summary statistics for authenticated student
+ * @access  Private (Student only)
+ */
+router.get('/me', protect, requireStudent, async (req, res) => {
+  try {
+    if (!req.user.studentId) {
+      return res.status(404).json({
+        success: false,
+        message: 'No student record linked to this user account.'
+      });
+    }
+
+    const student = await Student.findById(req.user.studentId).select('rollNumber fullName department semester');
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student record not found.'
+      });
+    }
+
+    const records = await Attendance.find({ studentId: req.user.studentId }).sort({ date: -1, createdAt: -1 });
+
+    const totalClasses = records.length;
+    const present = records.filter((r) => r.status === 'Present').length;
+    const absent = records.filter((r) => r.status === 'Absent').length;
+    const late = records.filter((r) => r.status === 'Late').length;
+    const attendancePercentage = totalClasses > 0 ? Math.round((present / totalClasses) * 100) : 0;
+
+    res.status(200).json({
+      success: true,
+      student,
+      summary: {
+        totalClasses,
+        present,
+        absent,
+        late,
+        attendancePercentage
+      },
+      data: records
+    });
+  } catch (error) {
+    console.error(`[Error] Failed to fetch student attendance history: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching attendance history.'
+    });
+  }
+});
 
 /**
  * @route   GET /api/attendance
  * @desc    Fetch all attendance records with populated student details
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.get('/', async (req, res) => {
+router.get('/', protect, requireFaculty, async (req, res) => {
   try {
     const { date, subject } = req.query;
     const filter = {};
@@ -45,9 +97,9 @@ router.get('/', async (req, res) => {
 /**
  * @route   POST /api/attendance
  * @desc    Mark attendance for a student (or batch for a classroom)
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, requireFaculty, async (req, res) => {
   try {
     // Check if this is a batch submission from a teacher class sheet: { date, subject, records: [{ studentId, status }, ...] }
     if (req.body.records && Array.isArray(req.body.records)) {
@@ -181,9 +233,9 @@ router.post('/', async (req, res) => {
 /**
  * @route   GET /api/attendance/student/:studentId
  * @desc    Fetch attendance history and calculated summary statistics for a specific student
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.get('/student/:studentId', async (req, res) => {
+router.get('/student/:studentId', protect, requireFaculty, async (req, res) => {
   try {
     const { studentId } = req.params;
 

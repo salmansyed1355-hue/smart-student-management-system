@@ -2,13 +2,49 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Student = require('../models/Student');
+const { protect, requireFaculty, requireStudent } = require('../middleware/authMiddleware');
+
+/**
+ * @route   GET /api/students/me
+ * @desc    Fetch own student profile linked to authenticated student account
+ * @access  Private (Student only)
+ */
+router.get('/me', protect, requireStudent, async (req, res) => {
+  try {
+    if (!req.user.studentId) {
+      return res.status(404).json({
+        success: false,
+        message: 'No student record linked to this user account. Please contact faculty/administrator.'
+      });
+    }
+
+    const student = await Student.findById(req.user.studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student record not found.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: student
+    });
+  } catch (error) {
+    console.error(`[Error] Failed to fetch own student profile: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching student profile.'
+    });
+  }
+});
 
 /**
  * @route   GET /api/students
  * @desc    Fetch all student records from MongoDB Atlas
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.get('/', async (req, res) => {
+router.get('/', protect, requireFaculty, async (req, res) => {
   try {
     // Retrieve all documents from the 'students' collection, newest first
     const students = await Student.find().sort({ createdAt: -1 });
@@ -30,9 +66,9 @@ router.get('/', async (req, res) => {
 /**
  * @route   POST /api/students
  * @desc    Create and save a new student record
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, requireFaculty, async (req, res) => {
   try {
     const {
       rollNumber,
@@ -102,11 +138,48 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/students/:id
+ * @desc    Fetch a single student record by MongoDB ID
+ * @access  Private (Faculty only)
+ */
+router.get('/:id', protect, requireFaculty, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid student ID format.'
+      });
+    }
+
+    const student = await Student.findById(id);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: student
+    });
+  } catch (error) {
+    console.error(`[Error] Failed to fetch student by ID: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching student.'
+    });
+  }
+});
+
+/**
  * @route   PUT /api/students/:id
  * @desc    Update an existing student record by MongoDB ID
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, requireFaculty, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -194,9 +267,9 @@ router.put('/:id', async (req, res) => {
 /**
  * @route   DELETE /api/students/:id
  * @desc    Delete a student record by MongoDB ID
- * @access  Public
+ * @access  Private (Faculty only)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, requireFaculty, async (req, res) => {
   try {
     const { id } = req.params;
 

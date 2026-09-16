@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import StudentDashboard from './pages/StudentDashboard';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Dashboard from './components/dashboard/Dashboard';
@@ -11,11 +12,20 @@ import MarksManagement from './components/marks/MarksManagement';
 import { Loader2 } from 'lucide-react';
 
 function AuthenticatedApp() {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [serverConnected, setServerConnected] = useState(true);
+
+  const isStudent = (user?.role || '').toLowerCase() === 'student';
+
+  // Ensure student always stays on dashboard
+  useEffect(() => {
+    if (isStudent && activeTab !== 'dashboard') {
+      setActiveTab('dashboard');
+    }
+  }, [isStudent, activeTab]);
 
   // Initial authentication verification loading screen
   if (loading) {
@@ -35,7 +45,7 @@ function AuthenticatedApp() {
     return <Login onSwitchToSignup={() => setAuthMode('signup')} />;
   }
 
-  // Authenticated: Access granted to Dashboard and Management modules
+  // Authenticated: Access granted based on Role (Faculty vs Student)
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex">
       {/* Sidebar Navigation */}
@@ -56,9 +66,11 @@ function AuthenticatedApp() {
           activeTab={activeTab}
         />
 
-        {/* Dynamic Page Content */}
+        {/* Dynamic Page Content: Role-Gated */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {activeTab === 'dashboard' ? (
+          {isStudent ? (
+            <StudentDashboard onServerStatusChange={setServerConnected} />
+          ) : activeTab === 'dashboard' ? (
             <Dashboard onServerStatusChange={setServerConnected} />
           ) : activeTab === 'attendance' ? (
             <AttendanceManagement onServerStatusChange={setServerConnected} />

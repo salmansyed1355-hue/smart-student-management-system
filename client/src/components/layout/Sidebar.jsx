@@ -15,13 +15,21 @@ import { useAuth } from '../../context/AuthContext';
 export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, onSelectTab }) {
   const { user, logout } = useAuth();
 
-  const navItems = [
+  const isStudent = (user?.role || '').toLowerCase() === 'student';
+
+  const facultyNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, disabled: false },
     { id: 'students', label: 'Student Directory', icon: Users, disabled: false },
     { id: 'attendance', label: 'Attendance', icon: CalendarCheck, disabled: false },
     { id: 'marks', label: 'Marks & Grades', icon: Award, disabled: false },
     { id: 'settings', label: 'Settings', icon: Settings, disabled: true }
   ];
+
+  const studentNavItems = [
+    { id: 'dashboard', label: 'My Dashboard', icon: LayoutDashboard, disabled: false }
+  ];
+
+  const navItems = isStudent ? studentNavItems : facultyNavItems;
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -56,7 +64,9 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
             </div>
             <div>
               <span className="font-bold text-base tracking-tight text-white block">Smart SMS</span>
-              <span className="text-[11px] text-slate-400 font-medium tracking-wide uppercase block">BTech Admin</span>
+              <span className="text-[11px] text-slate-400 font-medium tracking-wide uppercase block">
+                {isStudent ? 'Student Portal' : 'Faculty Admin'}
+              </span>
             </div>
           </div>
           {/* Close button for mobile */}
@@ -72,7 +82,7 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
         {/* Navigation Items */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Main Menu
+            {isStudent ? 'Student Navigation' : 'Faculty Navigation'}
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -118,10 +128,10 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
               </div>
               <div className="min-w-0 truncate">
                 <span className="text-xs font-semibold text-white block truncate leading-tight">
-                  {user?.name || 'Administrator'}
+                  {user?.name || (isStudent ? 'Student' : 'Faculty')}
                 </span>
                 <span className="text-[10px] text-slate-400 block truncate">
-                  {user?.email || 'admin'}
+                  {isStudent ? 'Role: Student' : 'Role: Faculty'}
                 </span>
               </div>
             </div>

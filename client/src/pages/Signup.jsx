@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { GraduationCap, User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle, Shield, Hash } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Signup({ onSwitchToLogin }) {
   const { signup } = useAuth();
 
+  const [selectedRole, setSelectedRole] = useState('faculty'); // 'faculty' or 'student'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    rollNumber: '',
     password: '',
     confirmPassword: '',
   });
@@ -25,15 +27,25 @@ export default function Signup({ onSwitchToLogin }) {
     if (errorMessage) setErrorMessage('');
   };
 
+  const handleRoleChange = (role) => {
+    setSelectedRole(role);
+    setErrorMessage('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
-    const { name, email, password, confirmPassword } = formData;
+    const { name, email, rollNumber, password, confirmPassword } = formData;
 
-    // 1. Check all fields required
+    // 1. Check required fields
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      setErrorMessage('All fields are required.');
+      setErrorMessage('All required fields must be filled.');
+      return;
+    }
+
+    if (selectedRole === 'student' && !rollNumber.trim()) {
+      setErrorMessage('Student Roll Number is required to link your academic record.');
       return;
     }
 
@@ -58,7 +70,13 @@ export default function Signup({ onSwitchToLogin }) {
 
     try {
       setIsLoading(true);
-      await signup(name.trim(), email.trim().toLowerCase(), password);
+      await signup(
+        name.trim(),
+        email.trim().toLowerCase(),
+        password,
+        selectedRole,
+        selectedRole === 'student' ? rollNumber.trim().toUpperCase() : ''
+      );
       // On success, AuthContext triggers authenticated state
     } catch (err) {
       setErrorMessage(err.message || 'Failed to create account. Please try again.');
@@ -72,7 +90,7 @@ export default function Signup({ onSwitchToLogin }) {
       <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all">
         
         {/* Brand Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/40 mb-4 transform hover:scale-105 transition-transform">
             <GraduationCap className="w-8 h-8" />
           </div>
@@ -83,8 +101,36 @@ export default function Signup({ onSwitchToLogin }) {
             Create Account
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Register as an academic administrator
+            {selectedRole === 'faculty' ? 'Register as academic faculty' : 'Register your student portal access'}
           </p>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div className="mb-6 p-1 bg-slate-100/90 rounded-xl flex items-center gap-1 border border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => handleRoleChange('faculty')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              selectedRole === 'faculty'
+                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Faculty Account</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRoleChange('student')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              selectedRole === 'student'
+                ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Student Account</span>
+          </button>
         </div>
 
         {/* Error Alert Box */}
@@ -100,7 +146,7 @@ export default function Signup({ onSwitchToLogin }) {
           {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-              Full Name
+              Full Name <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -111,17 +157,44 @@ export default function Signup({ onSwitchToLogin }) {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Dr. Rajesh Sharma"
+                placeholder={selectedRole === 'faculty' ? 'Dr. Rajesh Sharma' : 'Aarav Sharma'}
                 required
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
+          {/* Roll Number (for Student only) */}
+          {selectedRole === 'student' && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                Roll Number <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Hash className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  name="rollNumber"
+                  value={formData.rollNumber}
+                  onChange={handleChange}
+                  placeholder="e.g. SMS004"
+                  required={selectedRole === 'student'}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all uppercase"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Enter your official college roll number.
+              </p>
+            </div>
+          )}
+
           {/* Email Address */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-              Email Address
+              {selectedRole === 'student' ? 'Official College Email' : 'Faculty Email Address'}{' '}
+              <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -132,11 +205,16 @@ export default function Signup({ onSwitchToLogin }) {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="rajesh@college.edu"
+                placeholder={selectedRole === 'student' ? 'e.g. yourname@example.com' : 'rajesh@college.edu'}
                 required
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
+            {selectedRole === 'student' && (
+              <p className="text-[11px] text-indigo-600/90 mt-1 font-medium">
+                Use the email address registered with your college student record.
+              </p>
+            )}
           </div>
 
           {/* Password */}

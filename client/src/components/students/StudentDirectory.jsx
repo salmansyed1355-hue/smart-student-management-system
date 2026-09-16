@@ -14,22 +14,24 @@ import AddStudentModal from './AddStudentModal';
 import ViewStudentModal from './ViewStudentModal';
 import EditStudentModal from './EditStudentModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
-import { BASE_URL } from '../../services/api';
+import { apiRequest } from '../../services/api';
 
 export default function StudentDirectory({ onServerStatusChange }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
   
-  // Modal states
+  // Modal visibility states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewingStudent, setViewingStudent] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
   const [deletingStudent, setDeletingStudent] = useState(null);
 
-  // Success toast notification
+  // Toast notifications
   const [successToast, setSuccessToast] = useState(null);
 
   const showToast = (message) => {
@@ -39,16 +41,12 @@ export default function StudentDirectory({ onServerStatusChange }) {
     }, 4000);
   };
 
-  // Fetch all students from Express API
+  // Fetch all students from Express API using authenticated apiRequest
   const fetchStudents = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${BASE_URL}/students`);
-      if (!response.ok) {
-        throw new Error(`Server responded with HTTP ${response.status}`);
-      }
-      const json = await response.json();
+      const json = await apiRequest('/students');
       if (json.success && Array.isArray(json.data)) {
         setStudents(json.data);
         if (onServerStatusChange) onServerStatusChange(true);
