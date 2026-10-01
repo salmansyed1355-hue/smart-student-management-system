@@ -142,7 +142,14 @@ router.post('/', protect, requireFaculty, async (req, res) => {
 
           const updated = await Attendance.findOneAndUpdate(
             { studentId: item.studentId, date: normalizedDate, subject: subject.trim() },
-            { status: item.status },
+            { 
+              $set: { status: item.status },
+              $setOnInsert: {
+                studentId: item.studentId,
+                date: normalizedDate,
+                subject: subject.trim()
+              }
+            },
             { new: true, upsert: true, runValidators: true }
           );
 
@@ -189,15 +196,22 @@ router.post('/', protect, requireFaculty, async (req, res) => {
       });
     }
 
-    // 4. Create attendance document
-    const newAttendance = new Attendance({
-      studentId,
-      date,
-      status,
-      subject
-    });
+    // 4. Create or update attendance document
+    const d = new Date(date);
+    const normalizedDate = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 
-    const savedAttendance = await newAttendance.save();
+    const savedAttendance = await Attendance.findOneAndUpdate(
+      { studentId, date: normalizedDate, subject: subject.trim() },
+      { 
+        $set: { status },
+        $setOnInsert: {
+          studentId,
+          date: normalizedDate,
+          subject: subject.trim()
+        }
+      },
+      { new: true, upsert: true, runValidators: true }
+    );
 
     res.status(201).json({
       success: true,
