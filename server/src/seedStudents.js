@@ -110,7 +110,7 @@ const studentList = [
   { name: 'Tilak Varma', gender: 'M' }
 ];
 
-const departments = ['CSE', 'IT', 'ECE', 'MECH', 'CIVIL'];
+const departments = ['CSE', 'AI&ML', 'IT', 'ECE', 'MECH', 'CIVIL'];
 
 // Map semester to batch year
 const semToBatch = {

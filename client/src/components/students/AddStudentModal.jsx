@@ -217,6 +217,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
               >
                 <option value="CSE">CSE (Computer Science)</option>
+                <option value="AI&ML">AI&ML (Artificial Intelligence & Machine Learning)</option>
                 <option value="IT">IT (Information Tech)</option>
                 <option value="ECE">ECE (Electronics)</option>
                 <option value="MECH">MECH (Mechanical)</option>

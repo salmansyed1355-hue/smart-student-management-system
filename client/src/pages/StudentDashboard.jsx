@@ -78,6 +78,9 @@ export default function StudentDashboard() {
     switch (dept?.toUpperCase()) {
       case 'CSE':
         return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'AI&ML':
+      case 'AIML':
+        return 'bg-violet-50 text-violet-700 border-violet-200';
       case 'IT':
         return 'bg-sky-50 text-sky-700 border-sky-200';
       case 'ECE':

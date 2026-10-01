@@ -228,6 +228,7 @@ export default function EditStudentModal({ isOpen, onClose, student, onStudentUp
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
               >
                 <option value="CSE">CSE</option>
+                <option value="AI&ML">AI&ML</option>
                 <option value="IT">IT</option>
                 <option value="ECE">ECE</option>
                 <option value="MECH">MECH</option>

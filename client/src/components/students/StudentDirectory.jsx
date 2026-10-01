@@ -101,7 +101,9 @@ export default function StudentDirectory({ onServerStatusChange }) {
 
       const matchesDept = 
         selectedDept === 'ALL' || 
-        student.department?.toUpperCase() === selectedDept.toUpperCase();
+        student.department?.toUpperCase() === selectedDept.toUpperCase() ||
+        (selectedDept.toUpperCase() === 'AI&ML' && (student.department?.toUpperCase() === 'AIML' || student.department?.toUpperCase() === 'AI&ML')) ||
+        (selectedDept.toUpperCase() === 'AIML' && (student.department?.toUpperCase() === 'AIML' || student.department?.toUpperCase() === 'AI&ML'));
 
       return matchesSearch && matchesDept;
     });
@@ -139,7 +141,7 @@ export default function StudentDirectory({ onServerStatusChange }) {
             Student Directory
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage and view all registered students.
+            Manage students and click any student to view their details &amp; academic progress dashboard.
           </p>
         </div>
 
@@ -219,6 +221,7 @@ export default function StudentDirectory({ onServerStatusChange }) {
           >
             <option value="ALL">All Departments</option>
             <option value="CSE">CSE</option>
+            <option value="AI&ML">AI&ML</option>
             <option value="IT">IT</option>
             <option value="ECE">ECE</option>
             <option value="MECH">MECH</option>

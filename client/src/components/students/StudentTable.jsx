@@ -28,6 +28,9 @@ export default function StudentTable({
     switch (dept?.toUpperCase()) {
       case 'CSE':
         return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'AI&ML':
+      case 'AIML':
+        return 'bg-violet-50 text-violet-700 border-violet-200';
       case 'IT':
         return 'bg-sky-50 text-sky-700 border-sky-200';
       case 'ECE':
@@ -161,11 +164,13 @@ export default function StudentTable({
             {students.map((student) => (
               <tr 
                 key={student._id || student.rollNumber} 
-                className="hover:bg-slate-50/70 transition-colors group"
+                onClick={() => onView && onView(student)}
+                className="hover:bg-indigo-50/50 transition-colors group cursor-pointer"
+                title={`Click to view ${student.fullName}'s details & progress dashboard`}
               >
                 {/* Roll Number */}
                 <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
-                  <span className="font-mono font-semibold text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                  <span className="font-mono font-semibold text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 group-hover:bg-indigo-100/60 group-hover:text-indigo-900 group-hover:border-indigo-200 transition-colors">
                     {student.rollNumber}
                   </span>
                 </td>
@@ -173,7 +178,7 @@ export default function StudentTable({
                 {/* Name & Avatar */}
                 <td className="py-4 px-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs group-hover:scale-105 transition-transform">
                       {getInitials(student.fullName)}
                     </div>
                     <div>
@@ -227,19 +232,25 @@ export default function StudentTable({
                 {/* Actions */}
                 <td className="py-4 px-4 sm:px-6 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-1">
-                    {/* View Button */}
+                    {/* View Progress Dashboard Button */}
                     <button
-                      onClick={() => onView && onView(student)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onView && onView(student);
+                      }}
                       className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
-                      title="View Student Details"
-                      aria-label={`View details of ${student.fullName}`}
+                      title="View Student Details & Progress Dashboard"
+                      aria-label={`View details and progress dashboard of ${student.fullName}`}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
 
                     {/* Edit Button */}
                     <button
-                      onClick={() => onEdit && onEdit(student)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit && onEdit(student);
+                      }}
                       className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
                       title="Edit Student"
                       aria-label={`Edit ${student.fullName}`}
@@ -249,7 +260,10 @@ export default function StudentTable({
 
                     {/* Delete Button */}
                     <button
-                      onClick={() => onDelete && onDelete(student)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete && onDelete(student);
+                      }}
                       className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       title="Delete Student"
                       aria-label={`Delete ${student.fullName}`}
