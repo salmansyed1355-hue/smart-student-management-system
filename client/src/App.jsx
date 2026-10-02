@@ -9,6 +9,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import StudentDirectory from './components/students/StudentDirectory';
 import AttendanceManagement from './components/attendance/AttendanceManagement';
 import MarksManagement from './components/marks/MarksManagement';
+import Footer from './components/layout/Footer';
 import { Loader2 } from 'lucide-react';
 
 function AuthenticatedApp() {
@@ -30,9 +31,15 @@ function AuthenticatedApp() {
   // Initial authentication verification loading screen
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
-        <p className="text-sm font-medium text-slate-300">Loading Smart Student Management System...</p>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-between text-white p-4">
+        <div />
+        <div className="flex flex-col items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+          <p className="text-sm font-medium text-slate-300">Loading Smart Student Management System...</p>
+        </div>
+        <div className="w-full max-w-4xl">
+          <Footer variant="dark" />
+        </div>
       </div>
     );
   }
@@ -81,10 +88,8 @@ function AuthenticatedApp() {
           )}
         </main>
 
-        {/* Dashboard Footer */}
-        <footer className="border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-400 bg-white">
-          Smart Student Management System &bull; BTech Academic Portal &bull; Powered by React & MongoDB Atlas
-        </footer>
+        {/* Dashboard Footer with Bold & Eye-Catchy Developer Credit */}
+        <Footer variant="light" />
       </div>
     </div>
   );

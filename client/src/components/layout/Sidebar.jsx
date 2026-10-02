@@ -8,7 +8,8 @@ import {
   Settings, 
   X, 
   Server,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -146,7 +147,7 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
         </div>
 
         {/* System Status Footer */}
-        <div className="px-4 pb-4 bg-slate-900">
+        <div className="px-4 pb-2 bg-slate-900">
           <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-800/40 border border-slate-700/30">
             <Server className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <div className="text-xs truncate">
@@ -156,6 +157,19 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
                   {serverConnected ? 'Atlas DB Connected' : 'Connecting...'}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Developer Credit in Sidebar */}
+        <div className="px-4 pb-4 bg-slate-900">
+          <div className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-950/70 via-purple-950/70 to-slate-900 border border-indigo-500/30 shadow-inner text-center">
+            <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-slate-300">
+              <Sparkles className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
+              <span>Developed By -</span>
+            </div>
+            <div className="text-xs font-black tracking-wider uppercase bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent mt-0.5">
+              SYED SALMAN
             </div>
           </div>
         </div>

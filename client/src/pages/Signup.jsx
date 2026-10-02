@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GraduationCap, User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle, Shield, Hash } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/layout/Footer';
 
 export default function Signup({ onSwitchToLogin }) {
   const { signup } = useAuth();
@@ -86,8 +87,9 @@ export default function Signup({ onSwitchToLogin }) {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all">
+    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-6 lg:p-8">
+      <div className="w-full flex-1 flex items-center justify-center py-4">
+        <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all my-auto">
         
         {/* Brand Header */}
         <div className="text-center mb-6">
@@ -309,5 +311,11 @@ export default function Signup({ onSwitchToLogin }) {
         </div>
       </div>
     </div>
-  );
+
+    {/* Footer at end of page */}
+    <div className="w-full max-w-4xl mt-6">
+      <Footer variant="dark" />
+    </div>
+  </div>
+);
 }

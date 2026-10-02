@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GraduationCap, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle, Shield, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/layout/Footer';
 
 export default function Login({ onSwitchToSignup }) {
   const { login } = useAuth();
@@ -49,9 +50,10 @@ export default function Login({ onSwitchToSignup }) {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-6 lg:p-8">
-      {/* Outer Card with Glassmorphism / subtle glow */}
-      <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all">
+    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-6 lg:p-8">
+      <div className="w-full flex-1 flex items-center justify-center">
+        {/* Outer Card with Glassmorphism / subtle glow */}
+        <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10 transition-all my-auto">
         
         {/* Brand Header */}
         <div className="text-center mb-6">
@@ -200,6 +202,12 @@ export default function Login({ onSwitchToSignup }) {
         </div>
       </div>
     </div>
-  );
+
+    {/* Footer at end of page */}
+    <div className="w-full max-w-4xl mt-6">
+      <Footer variant="dark" />
+    </div>
+  </div>
+);
 }
 
