@@ -4,8 +4,31 @@
  * to Authorization headers for authenticated requests.
  */
 
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
-export const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+const resolveApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+
+  // If in browser and not running on localhost (e.g. deployed on Render/Vercel/custom domain),
+  // default to relative path '' so requests go to the same origin server!
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return '';
+    }
+  }
+
+  // If Vite was built for production bundle, use relative URL to prevent localhost hardcoding
+  if (import.meta.env.PROD) {
+    return '';
+  }
+
+  return 'http://localhost:5000';
+};
+
+export const API_BASE_URL = resolveApiBaseUrl();
+export const BASE_URL = API_BASE_URL ? (API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`) : '/api';
 
 /**
  * Get the stored JWT token from localStorage

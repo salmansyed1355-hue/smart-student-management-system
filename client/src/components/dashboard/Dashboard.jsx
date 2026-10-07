@@ -95,14 +95,30 @@ export default function Dashboard({ onServerStatusChange, onSelectTab }) {
 
   const formatTimeAgo = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffSec = Math.floor((now - date) / 1000);
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'N/A';
+      const now = new Date();
+      const diffSec = Math.floor((now - date) / 1000);
 
-    if (diffSec < 60) return 'Just now';
-    if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
-    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      if (diffSec < 60) return 'Just now';
+      if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
+      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return 'Recent';
+    }
+  };
+
+  const formatClockTime = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
   };
 
   useEffect(() => {
@@ -776,7 +792,7 @@ export default function Dashboard({ onServerStatusChange, onSelectTab }) {
                           {formatTimeAgo(log.timestamp)}
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatClockTime(log.timestamp)}
                         </span>
                       </div>
                     </div>
