@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const AllowedFaculty = require('../models/AllowedFaculty');
-const ActivityLog = require('../models/ActivityLog');
 const User = require('../models/User');
 const { protect, requireFaculty } = require('../middleware/authMiddleware');
 
@@ -123,18 +122,6 @@ router.post('/', async (req, res) => {
     // Check if user account already exists in DB
     const existingUser = await User.findOne({ email: normalizedEmail });
 
-    // Log the action in ActivityLog
-    await ActivityLog.logActivity({
-      email: req.user.email,
-      name: req.user.name || 'Faculty Admin',
-      role: 'faculty',
-      action: 'faculty_authorized',
-      status: 'success',
-      ipAddress: req.ip || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Web Client',
-      details: `Authorized ${normalizedEmail} to access faculty portal`
-    });
-
     res.status(201).json({
       success: true,
       message: `Successfully authorized ${normalizedEmail} for faculty access.`,
@@ -182,18 +169,6 @@ router.delete('/:email', async (req, res) => {
       });
     }
 
-    // Log the revocation in ActivityLog
-    await ActivityLog.logActivity({
-      email: req.user.email,
-      name: req.user.name || 'Faculty Admin',
-      role: 'faculty',
-      action: 'faculty_revoked',
-      status: 'success',
-      ipAddress: req.ip || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Web Client',
-      details: `Revoked faculty authorization for ${targetEmail}`
-    });
-
     res.status(200).json({
       success: true,
       message: `Faculty authorization for ${targetEmail} has been successfully revoked.`
@@ -203,49 +178,6 @@ router.delete('/:email', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while revoking faculty authorization.'
-    });
-  }
-});
-
-/**
- * @route   GET /api/faculty-access/recent-activity
- * @desc    Get portal recent access / login activity logs
- * @access  Private (Faculty only)
- */
-router.get('/recent-activity', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit, 10) || 50;
-
-    // Fetch latest activity logs
-    const logs = await ActivityLog.find({})
-      .sort({ timestamp: -1 })
-      .limit(limit);
-
-    // Compute summary metrics for security overview
-    const totalLogins = await ActivityLog.countDocuments({ action: 'login', status: 'success' });
-    const facultyLogins = await ActivityLog.countDocuments({ role: 'faculty', status: 'success' });
-    const studentLogins = await ActivityLog.countDocuments({ role: 'student', status: 'success' });
-    const deniedAttempts = await ActivityLog.countDocuments({ status: 'denied' });
-
-    // Distinct recent users
-    const distinctEmails = await ActivityLog.distinct('email', { status: 'success' });
-
-    res.status(200).json({
-      success: true,
-      metrics: {
-        totalLogins,
-        facultyLogins,
-        studentLogins,
-        deniedAttempts,
-        uniqueUsersCount: distinctEmails.length
-      },
-      data: logs
-    });
-  } catch (error) {
-    console.error(`[Error] Fetch recent activity: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching portal activity logs.'
     });
   }
 });

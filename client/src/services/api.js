@@ -111,11 +111,4 @@ export const revokeFacultyEmail = async (email) => {
   });
 };
 
-/**
- * Fetch recent portal website access and login activity logs
- */
-export const getRecentPortalActivity = async (limit = 50) => {
-  return await apiRequest(`/faculty-access/recent-activity?limit=${limit}`);
-};
-
 export default apiRequest;

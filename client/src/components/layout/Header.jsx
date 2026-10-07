@@ -20,7 +20,7 @@ export default function Header({ onToggleSidebar, serverConnected, activeTab }) 
       case 'marks':
         return 'Marks & Grades';
       case 'faculty-access':
-        return 'Faculty Access & Security Logs';
+        return 'Faculty Access Management';
       case 'students':
       default:
         return 'Students Directory';

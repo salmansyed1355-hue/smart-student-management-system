@@ -4,7 +4,6 @@ const router = express.Router();
 const User = require('../models/User');
 const Student = require('../models/Student');
 const AllowedFaculty = require('../models/AllowedFaculty');
-const ActivityLog = require('../models/ActivityLog');
 const { protect } = require('../middleware/authMiddleware');
 
 // Helper to generate signed JWT token with role and studentId
@@ -55,17 +54,6 @@ router.post('/signup', async (req, res) => {
     if (normalizedRole === 'faculty') {
       const isAllowed = await AllowedFaculty.isAllowed(normalizedEmail);
       if (!isAllowed) {
-        await ActivityLog.logActivity({
-          email: normalizedEmail,
-          name: name.trim(),
-          role: 'faculty',
-          action: 'signup_denied',
-          status: 'denied',
-          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
-          userAgent: req.headers['user-agent'] || 'Browser',
-          details: 'Faculty signup blocked: email is not on the authorized whitelist'
-        });
-
         return res.status(403).json({
           success: false,
           message: 'Access Denied: This email is not authorized for faculty registration. Only approved faculty emails (configured by salmansyed@gmail.com) can register.'
@@ -143,19 +131,7 @@ router.post('/signup', async (req, res) => {
 
     await user.save();
 
-    // 7. Log successful registration in ActivityLog
-    await ActivityLog.logActivity({
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      action: 'signup',
-      status: 'success',
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Browser',
-      details: `New ${user.role} user registered`
-    });
-
-    // 8. Generate JWT token
+    // 7. Generate JWT token
     const token = generateToken(user);
 
     // 9. Return response (excluding password)
@@ -250,17 +226,6 @@ router.post('/login', async (req, res) => {
     if (userRole === 'faculty') {
       const isAllowed = await AllowedFaculty.isAllowed(user.email);
       if (!isAllowed) {
-        await ActivityLog.logActivity({
-          email: user.email,
-          name: user.name,
-          role: 'faculty',
-          action: 'login_denied',
-          status: 'denied',
-          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
-          userAgent: req.headers['user-agent'] || 'Browser',
-          details: 'Faculty login blocked: email is not authorized on whitelist'
-        });
-
         return res.status(403).json({
           success: false,
           message: 'Access Denied: Your email is not authorized for faculty access. Only approved faculty emails (managed by salmansyed@gmail.com) are permitted.'
@@ -277,19 +242,7 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 6. Log successful login in ActivityLog
-    await ActivityLog.logActivity({
-      email: user.email,
-      name: user.name,
-      role: userRole,
-      action: 'login',
-      status: 'success',
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Browser',
-      details: 'Portal authentication successful'
-    });
-
-    // 7. Generate JWT token
+    // 6. Generate JWT token
     const token = generateToken(user);
 
     res.status(200).json({
@@ -328,29 +281,7 @@ router.get('/me', protect, async (req, res) => {
       });
     }
 
-    // Record website session activity (throttled to once every 2 minutes per user)
-    try {
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-      const recentLog = await ActivityLog.findOne({
-        email: user.email.toLowerCase().trim(),
-        timestamp: { $gte: twoMinutesAgo }
-      });
 
-      if (!recentLog) {
-        await ActivityLog.logActivity({
-          email: user.email,
-          name: user.name,
-          role: user.role || 'faculty',
-          action: 'website_visit',
-          status: 'success',
-          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
-          userAgent: req.headers['user-agent'] || 'Browser',
-          details: 'Active website session / Portal visit'
-        });
-      }
-    } catch (logErr) {
-      // Safe non-blocking log
-    }
 
     res.status(200).json({
       success: true,
