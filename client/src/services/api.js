@@ -62,4 +62,37 @@ export const apiRequest = async (endpoint, options = {}) => {
   return data;
 };
 
+/**
+ * Fetch all authorized faculty emails
+ */
+export const getFacultyWhitelist = async () => {
+  return await apiRequest('/faculty-access');
+};
+
+/**
+ * Authorize a new faculty email
+ */
+export const addFacultyEmail = async (email, name = '') => {
+  return await apiRequest('/faculty-access', {
+    method: 'POST',
+    body: JSON.stringify({ email, name }),
+  });
+};
+
+/**
+ * Revoke faculty authorization for an email
+ */
+export const revokeFacultyEmail = async (email) => {
+  return await apiRequest(`/faculty-access/${encodeURIComponent(email)}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * Fetch recent portal website access and login activity logs
+ */
+export const getRecentPortalActivity = async (limit = 50) => {
+  return await apiRequest(`/faculty-access/recent-activity?limit=${limit}`);
+};
+
 export default apiRequest;

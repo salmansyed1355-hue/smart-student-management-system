@@ -24,6 +24,23 @@ const connectDB = async () => {
     });
     console.log(`[Database] MongoDB Atlas connected successfully: ${conn.connection.host}`);
     isConnecting = false;
+
+    // Ensure primary root admin is seeded in AllowedFaculty
+    try {
+      const AllowedFaculty = require('../models/AllowedFaculty');
+      await AllowedFaculty.findOneAndUpdate(
+        { email: 'salmansyed@gmail.com' },
+        {
+          email: 'salmansyed@gmail.com',
+          name: 'Syed Salman (Primary Admin)',
+          addedBy: 'System Superadmin',
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
+    } catch (seedErr) {
+      console.warn(`[Database] Notice: Seed AllowedFaculty check: ${seedErr.message}`);
+    }
+
     return conn;
   } catch (error) {
     isConnecting = false;

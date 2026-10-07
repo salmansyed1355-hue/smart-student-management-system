@@ -19,6 +19,8 @@ export default function Header({ onToggleSidebar, serverConnected, activeTab }) 
         return 'Attendance Management';
       case 'marks':
         return 'Marks & Grades';
+      case 'faculty-access':
+        return 'Faculty Access & Security Logs';
       case 'students':
       default:
         return 'Students Directory';

@@ -2,9 +2,10 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
-const { protect } = require('../middleware/authMiddleware');
-
 const Student = require('../models/Student');
+const AllowedFaculty = require('../models/AllowedFaculty');
+const ActivityLog = require('../models/ActivityLog');
+const { protect } = require('../middleware/authMiddleware');
 
 // Helper to generate signed JWT token with role and studentId
 const generateToken = (user) => {
@@ -47,8 +48,33 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // 3. Check for existing user with same email
-    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedRole = role.toLowerCase().trim();
+
+    // 3. Security: If registering as faculty, check authorized faculty whitelist
+    if (normalizedRole === 'faculty') {
+      const isAllowed = await AllowedFaculty.isAllowed(normalizedEmail);
+      if (!isAllowed) {
+        await ActivityLog.logActivity({
+          email: normalizedEmail,
+          name: name.trim(),
+          role: 'faculty',
+          action: 'signup_denied',
+          status: 'denied',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+          userAgent: req.headers['user-agent'] || 'Browser',
+          details: 'Faculty signup blocked: email is not on the authorized whitelist'
+        });
+
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: This email is not authorized for faculty registration. Only approved faculty emails (configured by salmansyed@gmail.com) can register.'
+        });
+      }
+    }
+
+    // 4. Check for existing user with same email
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -56,8 +82,7 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // 4. Validate role
-    const normalizedRole = role.toLowerCase().trim();
+    // 5. Validate role
     if (!['faculty', 'student'].includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
@@ -118,10 +143,22 @@ router.post('/signup', async (req, res) => {
 
     await user.save();
 
-    // 7. Generate JWT token
+    // 7. Log successful registration in ActivityLog
+    await ActivityLog.logActivity({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      action: 'signup',
+      status: 'success',
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'Browser',
+      details: `New ${user.role} user registered`
+    });
+
+    // 8. Generate JWT token
     const token = generateToken(user);
 
-    // 8. Return response (excluding password)
+    // 9. Return response (excluding password)
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
@@ -209,6 +246,28 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // 5. Security: If logging in as faculty, verify against AllowedFaculty whitelist
+    if (userRole === 'faculty') {
+      const isAllowed = await AllowedFaculty.isAllowed(user.email);
+      if (!isAllowed) {
+        await ActivityLog.logActivity({
+          email: user.email,
+          name: user.name,
+          role: 'faculty',
+          action: 'login_denied',
+          status: 'denied',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+          userAgent: req.headers['user-agent'] || 'Browser',
+          details: 'Faculty login blocked: email is not authorized on whitelist'
+        });
+
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: Your email is not authorized for faculty access. Only approved faculty emails (managed by salmansyed@gmail.com) are permitted.'
+        });
+      }
+    }
+
     // If user is a student but has no studentId yet, try to auto-link via matching email
     if (userRole === 'student' && !user.studentId) {
       const studentMatch = await Student.findOne({ email: user.email });
@@ -218,7 +277,19 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 5. Generate JWT token
+    // 6. Log successful login in ActivityLog
+    await ActivityLog.logActivity({
+      email: user.email,
+      name: user.name,
+      role: userRole,
+      action: 'login',
+      status: 'success',
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'Browser',
+      details: 'Portal authentication successful'
+    });
+
+    // 7. Generate JWT token
     const token = generateToken(user);
 
     res.status(200).json({

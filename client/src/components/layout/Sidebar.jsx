@@ -5,7 +5,7 @@ import {
   LayoutDashboard, 
   CalendarCheck, 
   Award, 
-  Settings, 
+  ShieldCheck, 
   X, 
   Server,
   LogOut,
@@ -23,7 +23,7 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
     { id: 'students', label: 'Student Directory', icon: Users, disabled: false },
     { id: 'attendance', label: 'Attendance', icon: CalendarCheck, disabled: false },
     { id: 'marks', label: 'Marks & Grades', icon: Award, disabled: false },
-    { id: 'settings', label: 'Settings', icon: Settings, disabled: true }
+    { id: 'faculty-access', label: 'Faculty & Security', icon: ShieldCheck, badge: 'Protected', disabled: false }
   ];
 
   const studentNavItems = [

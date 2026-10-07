@@ -100,12 +100,19 @@ export default function Login({ onSwitchToSignup }) {
         </div>
 
         {/* Role Helper Banner */}
-        <div className="mb-5 px-3 py-2 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs text-indigo-700">
-          <span className="font-medium">
-            Logging in as: <strong className="uppercase">{selectedRole}</strong>
+        <div className={`mb-5 px-3 py-2.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs ${
+          selectedRole === 'faculty'
+            ? 'bg-amber-50/80 border-amber-200/80 text-amber-900'
+            : 'bg-indigo-50/60 border-indigo-100 text-indigo-700'
+        }`}>
+          <span className="font-semibold flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Logging in as: <strong className="uppercase">{selectedRole}</strong></span>
           </span>
-          <span className="text-[11px] text-indigo-500">
-            {selectedRole === 'faculty' ? 'Admin / Management' : 'Academic Portal'}
+          <span className="text-[11px] font-medium opacity-90">
+            {selectedRole === 'faculty'
+              ? '🔒 Protected: Approved Faculty Emails Only'
+              : 'Academic Student Portal'}
           </span>
         </div>
 

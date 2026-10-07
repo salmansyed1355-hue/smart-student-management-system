@@ -9,6 +9,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import StudentDirectory from './components/students/StudentDirectory';
 import AttendanceManagement from './components/attendance/AttendanceManagement';
 import MarksManagement from './components/marks/MarksManagement';
+import FacultyAccessManagement from './components/faculty/FacultyAccessManagement';
 import Footer from './components/layout/Footer';
 import { Loader2 } from 'lucide-react';
 
@@ -83,6 +84,8 @@ function AuthenticatedApp() {
             <AttendanceManagement onServerStatusChange={setServerConnected} />
           ) : activeTab === 'marks' ? (
             <MarksManagement onServerStatusChange={setServerConnected} />
+          ) : activeTab === 'faculty-access' ? (
+            <FacultyAccessManagement onServerStatusChange={setServerConnected} />
           ) : (
             <StudentDirectory onServerStatusChange={setServerConnected} />
           )}
