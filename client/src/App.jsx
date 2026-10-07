@@ -79,7 +79,7 @@ function AuthenticatedApp() {
           {isStudent ? (
             <StudentDashboard onServerStatusChange={setServerConnected} />
           ) : activeTab === 'dashboard' ? (
-            <Dashboard onServerStatusChange={setServerConnected} />
+            <Dashboard onServerStatusChange={setServerConnected} onSelectTab={setActiveTab} />
           ) : activeTab === 'attendance' ? (
             <AttendanceManagement onServerStatusChange={setServerConnected} />
           ) : activeTab === 'marks' ? (

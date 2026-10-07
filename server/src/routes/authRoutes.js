@@ -328,6 +328,30 @@ router.get('/me', protect, async (req, res) => {
       });
     }
 
+    // Record website session activity (throttled to once every 2 minutes per user)
+    try {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+      const recentLog = await ActivityLog.findOne({
+        email: user.email.toLowerCase().trim(),
+        timestamp: { $gte: twoMinutesAgo }
+      });
+
+      if (!recentLog) {
+        await ActivityLog.logActivity({
+          email: user.email,
+          name: user.name,
+          role: user.role || 'faculty',
+          action: 'website_visit',
+          status: 'success',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+          userAgent: req.headers['user-agent'] || 'Browser',
+          details: 'Active website session / Portal visit'
+        });
+      }
+    } catch (logErr) {
+      // Safe non-blocking log
+    }
+
     res.status(200).json({
       success: true,
       user: {

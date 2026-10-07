@@ -164,26 +164,33 @@ export default function FacultyAccessManagement({ onServerStatusChange }) {
 
   // Filter Whitelist items
   const filteredWhitelist = whitelist.filter((item) => {
-    const q = whitelistSearch.toLowerCase();
-    return item.email.toLowerCase().includes(q) || (item.name && item.name.toLowerCase().includes(q));
+    if (!item) return false;
+    const q = (whitelistSearch || '').toLowerCase().trim();
+    if (!q) return true;
+    const emailMatch = (item.email || '').toLowerCase().includes(q);
+    const nameMatch = (item.name || '').toLowerCase().includes(q);
+    return emailMatch || nameMatch;
   });
 
   // Filter Activity Logs
   const filteredActivity = activityLogs.filter((log) => {
+    if (!log) return false;
     const matchesFilter =
       activityFilter === 'all'
         ? true
         : activityFilter === 'faculty'
-        ? log.role === 'faculty'
+        ? (log.role || '').toLowerCase() === 'faculty'
         : activityFilter === 'student'
-        ? log.role === 'student'
+        ? (log.role || '').toLowerCase() === 'student'
         : log.status === 'denied';
 
+    const searchLower = (activitySearch || '').toLowerCase().trim();
     const matchesSearch =
-      !activitySearch.trim() ||
-      log.email.toLowerCase().includes(activitySearch.toLowerCase()) ||
-      (log.name && log.name.toLowerCase().includes(activitySearch.toLowerCase())) ||
-      (log.ipAddress && log.ipAddress.includes(activitySearch));
+      !searchLower ||
+      (log.email && log.email.toLowerCase().includes(searchLower)) ||
+      (log.name && log.name.toLowerCase().includes(searchLower)) ||
+      (log.ipAddress && log.ipAddress.includes(searchLower)) ||
+      (log.action && log.action.toLowerCase().includes(searchLower));
 
     return matchesFilter && matchesSearch;
   });
@@ -603,10 +610,10 @@ export default function FacultyAccessManagement({ onServerStatusChange }) {
                                     : 'bg-sky-100 text-sky-700'
                                 }`}
                               >
-                                {log.email.charAt(0).toUpperCase()}
+                                {(log.email || '?').charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <span className="font-bold text-slate-900 block">{log.email}</span>
+                                <span className="font-bold text-slate-900 block">{log.email || 'Anonymous'}</span>
                                 {log.name && <span className="text-[11px] text-slate-500">{log.name}</span>}
                               </div>
                             </div>

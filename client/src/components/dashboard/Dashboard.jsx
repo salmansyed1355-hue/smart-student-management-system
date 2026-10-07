@@ -15,7 +15,11 @@ import {
   Clock, 
   AlertCircle,
   BarChart3,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  Activity,
+  ShieldCheck,
+  ArrowRight,
+  Globe
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -30,10 +34,14 @@ import {
 } from 'recharts';
 import { apiRequest } from '../../services/api';
 
-export default function Dashboard({ onServerStatusChange }) {
+export default function Dashboard({ onServerStatusChange, onSelectTab }) {
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [marks, setMarks] = useState([]);
+  const [portalActivity, setPortalActivity] = useState([]);
+  const [activityMetrics, setActivityMetrics] = useState(null);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activityFeedType, setActivityFeedType] = useState('website'); // 'website' or 'records'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,16 +50,21 @@ export default function Dashboard({ onServerStatusChange }) {
     setLoading(true);
     setError(null);
     try {
-      const [studentsData, attendanceData, marksData] = await Promise.all([
+      const [studentsData, attendanceData, marksData, activityData] = await Promise.all([
         apiRequest('/students'),
         apiRequest('/attendance'),
-        apiRequest('/marks')
+        apiRequest('/marks'),
+        apiRequest('/faculty-access/recent-activity?limit=12').catch(() => ({ success: false, data: [] }))
       ]);
 
       if (studentsData.success && attendanceData.success && marksData.success) {
         setStudents(studentsData.data || []);
         setAttendance(attendanceData.data || []);
         setMarks(marksData.data || []);
+        if (activityData && activityData.success) {
+          setPortalActivity(activityData.data || []);
+          setActivityMetrics(activityData.metrics || null);
+        }
         if (onServerStatusChange) onServerStatusChange(true);
       } else {
         throw new Error('API returned unsuccessful response structure.');
@@ -63,6 +76,33 @@ export default function Dashboard({ onServerStatusChange }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshPortalActivity = async () => {
+    try {
+      setLoadingActivity(true);
+      const res = await apiRequest('/faculty-access/recent-activity?limit=12');
+      if (res && res.success) {
+        setPortalActivity(res.data || []);
+        setActivityMetrics(res.metrics || null);
+      }
+    } catch (err) {
+      console.warn('Failed to refresh portal activity:', err);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
+
+  const formatTimeAgo = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffSec = Math.floor((now - date) / 1000);
+
+    if (diffSec < 60) return 'Just now';
+    if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   useEffect(() => {
@@ -619,55 +659,190 @@ export default function Dashboard({ onServerStatusChange }) {
         </div>
       </div>
 
-      {/* Section: Recent Activity */}
+      {/* Section: Recent Website Activity & Live Portal Feeds */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-              <Clock className="w-4 h-4" />
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <Activity className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Recent Activity Log</h3>
-              <p className="text-xs text-slate-400">Chronological feed of latest database operations</p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-800">Recent Website Activity</h3>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Live portal feed" />
+              </div>
+              <p className="text-xs text-slate-400">Users and email accounts who accessed the website recently</p>
             </div>
           </div>
-          <span className="text-[11px] font-semibold text-slate-400">Live Feed</span>
+
+          <div className="flex items-center gap-2">
+            {/* Toggle Feed Type */}
+            <div className="bg-slate-100 p-1 rounded-xl flex items-center text-xs">
+              <button
+                type="button"
+                onClick={() => setActivityFeedType('website')}
+                className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  activityFeedType === 'website'
+                    ? 'bg-white text-indigo-600 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Website Users ({portalActivity.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivityFeedType('records')}
+                className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  activityFeedType === 'records'
+                    ? 'bg-white text-indigo-600 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Database Operations ({recentActivity.length})
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={refreshPortalActivity}
+              disabled={loadingActivity}
+              title="Refresh recent activity"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingActivity ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        {recentActivity.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
-            No recent activity logged yet.
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 text-xs">
-            {recentActivity.map((act, idx) => (
-              <div key={idx} className="py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl shrink-0 ${
-                    act.type === 'student' 
-                      ? 'bg-indigo-50 text-indigo-600' 
-                      : act.type === 'mark' 
-                      ? 'bg-amber-50 text-amber-600' 
-                      : 'bg-emerald-50 text-emerald-600'
-                  }`}>
-                    {act.type === 'student' ? (
-                      <UserPlus className="w-3.5 h-3.5" />
-                    ) : act.type === 'mark' ? (
-                      <Award className="w-3.5 h-3.5" />
-                    ) : (
-                      <CalendarCheck className="w-3.5 h-3.5" />
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-800 block">{act.title}</span>
-                    <span className="text-slate-500 text-[11px] block">{act.desc}</span>
-                  </div>
-                </div>
-                <span className="text-[11px] text-slate-400 whitespace-nowrap font-medium">
-                  {formatDate(act.date)}
-                </span>
+        {/* FEED 1: REAL WEBSITE ACTIVITY (WHO USED THE WEBSITE RECENTLY) */}
+        {activityFeedType === 'website' && (
+          <div>
+            {portalActivity.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400 space-y-1">
+                <Clock className="w-6 h-6 mx-auto mb-1 text-slate-300" />
+                <p className="font-semibold text-slate-600">No portal website sessions recorded yet.</p>
+                <p className="text-[11px]">Activity is logged automatically whenever a user logs in or visits the portal.</p>
               </div>
-            ))}
+            ) : (
+              <div className="divide-y divide-slate-100 text-xs">
+                {portalActivity.map((log, idx) => {
+                  const isFaculty = log.role === 'faculty';
+                  const isSuccess = log.status === 'success';
+
+                  return (
+                    <div key={log._id || idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50/60 rounded-lg px-2 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                          isFaculty
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-sky-100 text-sky-700'
+                        }`}>
+                          {(log.email || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-slate-900">{log.email}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              isFaculty
+                                ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                : 'bg-sky-50 text-sky-700 border border-sky-200'
+                            }`}>
+                              {log.role}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              isSuccess
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}>
+                              {isSuccess ? '● Active' : '● Denied'}
+                            </span>
+                          </div>
+                          <div className="text-slate-400 text-[11px] flex items-center gap-2 mt-0.5 flex-wrap">
+                            {log.name && <span className="text-slate-600 font-medium">{log.name}</span>}
+                            <span>&bull;</span>
+                            <span className="capitalize">{log.action ? log.action.replace('_', ' ') : 'Session'}</span>
+                            {log.ipAddress && (
+                              <>
+                                <span>&bull;</span>
+                                <span className="font-mono text-[10px] text-slate-500">{log.ipAddress}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 text-right">
+                        <span className="font-semibold text-slate-800 text-xs">
+                          {formatTimeAgo(log.timestamp)}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Quick Link to Faculty Security & Whitelist Page */}
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500">
+                Unique Website Visitors: <strong className="text-slate-800">{activityMetrics?.uniqueUsersCount || new Set(portalActivity.map(p => p.email)).size}</strong>
+              </span>
+              {onSelectTab && (
+                <button
+                  type="button"
+                  onClick={() => onSelectTab('faculty-access')}
+                  className="font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Manage Whitelist & Full Security Audit</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* FEED 2: ACADEMIC DATABASE RECORDS */}
+        {activityFeedType === 'records' && (
+          <div>
+            {recentActivity.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                No database records logged yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 text-xs">
+                {recentActivity.map((act, idx) => (
+                  <div key={idx} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-xl shrink-0 ${
+                        act.type === 'student' 
+                          ? 'bg-indigo-50 text-indigo-600' 
+                          : act.type === 'mark' 
+                          ? 'bg-amber-50 text-amber-600' 
+                          : 'bg-emerald-50 text-emerald-600'
+                      }`}>
+                        {act.type === 'student' ? (
+                          <UserPlus className="w-3.5 h-3.5" />
+                        ) : act.type === 'mark' ? (
+                          <Award className="w-3.5 h-3.5" />
+                        ) : (
+                          <CalendarCheck className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-slate-800 block">{act.title}</span>
+                        <span className="text-slate-500 text-[11px] block">{act.desc}</span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-slate-400 whitespace-nowrap font-medium">
+                      {formatDate(act.date)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
