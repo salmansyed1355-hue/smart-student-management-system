@@ -162,14 +162,25 @@ export default function Sidebar({ isOpen, onClose, serverConnected, activeTab, o
         </div>
 
         {/* Developer Credit in Sidebar */}
-        <div className="px-4 pb-4 bg-slate-900">
-          <div className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-950/70 via-purple-950/70 to-slate-900 border border-indigo-500/30 shadow-inner text-center">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-slate-300">
-              <Sparkles className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
-              <span>Developed By -</span>
+        <div className="px-3 pb-3 bg-slate-900">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-950/80 via-purple-950/60 to-slate-900 border border-indigo-500/30 shadow-inner text-center">
+            <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-300 mb-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
+              <span>Developed By :</span>
             </div>
-            <div className="text-xs font-black tracking-wider uppercase bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent mt-0.5">
-              SYED SALMAN
+            <div className="grid grid-cols-1 gap-1 text-[11px]">
+              <span className="font-extrabold tracking-wide uppercase bg-gradient-to-r from-cyan-300 via-sky-200 to-blue-400 bg-clip-text text-transparent py-0.5 px-1 rounded bg-slate-800/40 border border-cyan-500/20">
+                SYED SALMAN
+              </span>
+              <span className="font-extrabold tracking-wide uppercase bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-400 bg-clip-text text-transparent py-0.5 px-1 rounded bg-slate-800/40 border border-emerald-500/20">
+                SHAIK FARHAN
+              </span>
+              <span className="font-extrabold tracking-wide uppercase bg-gradient-to-r from-fuchsia-300 via-pink-200 to-purple-400 bg-clip-text text-transparent py-0.5 px-1 rounded bg-slate-800/40 border border-fuchsia-500/20">
+                SYED KHAJA RAMTHULLA
+              </span>
+              <span className="font-extrabold tracking-wide uppercase bg-gradient-to-r from-amber-300 via-orange-200 to-rose-400 bg-clip-text text-transparent py-0.5 px-1 rounded bg-slate-800/40 border border-amber-500/20">
+                T.GOPI SURAJ KUMAR
+              </span>
             </div>
           </div>
         </div>
